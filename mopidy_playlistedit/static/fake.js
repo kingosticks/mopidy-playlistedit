@@ -54715,7 +54715,13 @@ var MopidyMock = function () {
             },
             lookup: function (args) {
                 const uri = args['uri']
+                console.log(`Lookup Playlist ${uri}`)
                 return Promise.resolve(lookupData[uri])
+            },
+            delete: function (args) {
+                const uri = args['uri']
+                console.log(`Deleting Playlist ${uri}`)
+                return Promise.resolve(true)
             },
         },
     }

@@ -26,11 +26,15 @@ $(document).ready(function (event) {
 
     resetUI()
     
-    $('#playlistTracks').on('click', 'i.deleteTrack', function(){
+    $('#playlistTracks').on('click', 'i.deleteItem', function(){
        removeTrack($(this).closest('.list-group-item'))       
     });
-    $('#playlists').on('click', 'i.deletePlaylist', function(){
-       removeTrack($(this).closest('.list-group-item'))       
+    $('#playlists').on('click', 'i.deleteItem', function(){
+       removePlaylist($(this).closest('.list-group-item'))       
+    });
+    $('#playlists').on('click', '.list-group-item', function(){
+       const itemElem = $(this).closest('.list-group-item')
+       loadPlaylist(spotifyUri(itemElem))
     });
     $('#playlistSave').on('click', function(){
        alert("SAVE ME!")
@@ -41,9 +45,21 @@ $(document).ready(function (event) {
     });
 })
 
-function removeTrack(trackElem) {
+function spotifyUri(el) {
+    return el.data('spotifyUri')
+}
+
+function removeTrack(trackItem) {
     setPlaylistModified(true)
-    trackElem.remove();
+    trackItem.remove();
+}
+
+function removePlaylist(playlistItem) {
+    const uri = spotifyUri(playlistItem)
+    mopidy.playlists.delete({'uri': uri}).then(function (success) {
+        resetUI()
+    })
+    playlistItem.remove();
 }
 
 function setPlaylistModified(isModified) {
@@ -59,10 +75,10 @@ function loadAllPlaylists (selectFirst) {
     mopidy.playlists.asList().then(function (plists) {
         for (var i = 0; i < plists.length; i++) {
             const p = plists[i]
-            const html = `<div class="list-group-item list-group-item-action no-drag"
-                            onclick="loadPlaylist($(this).data('uri'))"
-                            data-uri="${ p.uri }">${ p.name }</div>`
-            listElem.append(html)
+            var listItem = $('<div class="list-group-item list-group-item-action"></div>')
+            listItem.data('spotifyUri', p.uri)
+            listItem.html(htmlItemWithDelete(p.name))
+            listItem.appendTo(listElem)
         }
         if (selectFirst) {
             $('#playlists')[0].childNodes[0].click()
@@ -94,30 +110,30 @@ function loadPlaylist (uri, customListElem) {
         setPlaylistModified(false)
         selectedPlaylist.uri = playlist.uri
         for (var i = 0; i < playlist.tracks.length; i++) {
-            const track = getTrackDetails(playlist.tracks[i])
-            var listItem = $(`<div class="list-group-item list-group-item-action">${ formatTrackItem(track) }</div>`)
+            const track = playlist.tracks[i]
+            const content = htmlTrack(track)
+            var listItem = $('<div class="list-group-item list-group-item-action"></div>')
             listItem.data('spotifyUri', track.uri)
+            listItem.html(htmlItemWithDelete(content))
             listItem.appendTo(listElem)
         }
         $('#playlistTracksWrap').show()
         $('#playlistName').val(playlist.name)
-        console.log(`Loaded ${playlist.name} (${uri}) for editing`)
     }, console.error)
 }
 
-function formatTrackItem(track) {
+function htmlItemWithDelete(content) {
     return `<div class="row">
-                <div class="col mb-0">
-                    <h5 class="mb-0">${ track.artists } - ${ track.title }</h5>
-                    <small>${ track.albumTitle }</small>
+                <div class="col mb-0 item-content">
+                    ${ content }
                 </div>
-                <div class="col-1 align-self-center">
-                    <i class="fas fa-trash btn btn-sm deleteTrack" roll="button"></i>
+                <div class="col-md-auto align-self-center">
+                    <i class="fas fa-trash btn btn-sm deleteItem" roll="button"></i>
                 </div>
             </div>`
 }
 
-function getTrackDetails(track) {
+function htmlTrack(track) {
     var artistStr = 'Unknown Artist'
     if (track.artists) {
         artistStr = ''
@@ -131,9 +147,7 @@ function getTrackDetails(track) {
             }
         }
     }
-    return {
-        title: track.name,
-        artists: artistStr,
-        albumTitle: (track.album && track.album.name) ? track.album.name : '',
-    }
+    const albumTitle = (track.album && track.album.name) ? track.album.name : ''
+    return `<h5 class="mb-0">${ artistStr } - ${ track.name }</h5>
+            <small>${ albumTitle }</small>`
 }
