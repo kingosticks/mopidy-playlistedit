@@ -11,7 +11,7 @@ var selectedPlaylist = {
 $(document).ready(function (event) {
     mopidy = getMopidy()
     mopidy.on('state:online', function () {
-        loadAllPlaylists(OFFLINE_TEST)
+        loadAllPlaylists(OFFLINE_TEST ? 0 : undefined)
     })
     
     Sortable.create(playlistTracks, {
@@ -44,10 +44,29 @@ $(document).ready(function (event) {
     $('#playlistReset').on('click', function(){
        loadPlaylist(selectedPlaylist.model.uri)
     });
+    $('#newPlaylistCreate').on('click', function(){
+       createPlaylist()
+    });
 })
 
 function spotifyUri(el) {
     return el.data('spotifyUri')
+}
+
+function createPlaylist() {
+    const scheme = $("#newPlaylistScheme").val()
+    const name = $("#newPlaylistName").val()
+    if (name.length == 0) {
+        return
+    }
+    mopidy.playlists.create({'name': name, 'uri_scheme': scheme}).then(function (newPlaylist) {
+        if (newPlaylist) {
+            //loadPlaylist(newPlaylist)
+            loadAllPlaylists(-1)
+        }
+    })
+    $("#exampleModal").modal('hide')
+    $("#newPlaylistName").val("")
 }
 
 function removeTrack(trackItem) {
@@ -99,7 +118,7 @@ function setSelectedPlaylist(mopidyPlaylist) {
     }
 }
 
-function loadAllPlaylists (selectFirst) {
+function loadAllPlaylists (selectIndex) {
     const listElem = $('#playlists')
     listElem.empty()
     resetUI()
@@ -111,8 +130,8 @@ function loadAllPlaylists (selectFirst) {
             listItem.html(htmlItemWithDelete(p.name))
             listItem.appendTo(listElem)
         }
-        if (selectFirst) {
-            $('#playlists')[0].childNodes[0].click()
+        if (typeof(selectIndex) === "number") {
+            $('#playlists .list-group-item').eq(selectIndex).find('.item-content').click()
         }
     }, console.error)
 }

@@ -54730,6 +54730,28 @@ var MopidyMock = function () {
                 lookupData[playlist.uri] = playlist
                 return Promise.resolve(playlist)
             },
+            create: function (args) {
+                const name = args['name']
+                const scheme = args['uri_scheme']
+                console.log(`Creating ${scheme} playlist called '${name}'`)
+
+                const uri = `spotify:playlist:${name}-1234567`
+                const ref = {
+                    "__model__": "Ref",
+                    "uri": uri,
+                    "name": name,
+                    "type": "playlist"
+                }
+                asListData.push(ref)
+                const playlist = {
+                    "__model__": "Playlist",
+                    "uri": uri,
+                    "name": name,
+                    "tracks": [],
+                }
+                lookupData[uri] = playlist
+                return Promise.resolve(playlist)
+            },
         },
     }
 }
