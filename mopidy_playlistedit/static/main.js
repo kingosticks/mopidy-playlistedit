@@ -5,7 +5,7 @@ function getMopidy() {
 var mopidy
 var selectedPlaylist = {
     modified: false,
-    uri: null,
+    model: null,
 }
 
 $(document).ready(function (event) {
@@ -20,8 +20,10 @@ $(document).ready(function (event) {
       draggable: '.list-group-item',
       handle: '.list-group-item',
       sort: true,
-      filter: '.sortable-disabled',
-      chosenClass: 'active'
+      chosenClass: 'active',
+      onUpdate: function (evt) {
+          setPlaylistModified(true)
+      },
     });
 
     resetUI()
@@ -30,18 +32,17 @@ $(document).ready(function (event) {
        removeTrack($(this).closest('.list-group-item'))       
     });
     $('#playlists').on('click', 'i.deleteItem', function(){
-       removePlaylist($(this).closest('.list-group-item'))       
+       deletePlaylist($(this).closest('.list-group-item'))
     });
-    $('#playlists').on('click', '.list-group-item', function(){
+    $('#playlists').on('click', '.item-content', function(){
        const itemElem = $(this).closest('.list-group-item')
        loadPlaylist(spotifyUri(itemElem))
     });
     $('#playlistSave').on('click', function(){
-       alert("SAVE ME!")
-       loadPlaylist(selectedPlaylist.uri)
+       savePlaylist(selectedPlaylist.model.uri)
     });
     $('#playlistReset').on('click', function(){
-       loadPlaylist(selectedPlaylist.uri)
+       loadPlaylist(selectedPlaylist.model.uri)
     });
 })
 
@@ -54,19 +55,49 @@ function removeTrack(trackItem) {
     trackItem.remove();
 }
 
-function removePlaylist(playlistItem) {
+function deletePlaylist(playlistItem) {
     const uri = spotifyUri(playlistItem)
     mopidy.playlists.delete({'uri': uri}).then(function (success) {
-        resetUI()
     })
     playlistItem.remove();
+    if (uri === selectedPlaylist.model.uri) {
+        resetUI()
+    }
+}
+
+function savePlaylist(uri) {
+    console.assert(uri == selectedPlaylist.model.uri, "uri mismatch when saving")
+    if (!selectedPlaylist.modified) {
+        alert("Playlist was not modified")
+        return
+    }
+
+    const mopidyPlaylist = { ...selectedPlaylist.model}
+    mopidyPlaylist.tracks = []
+    $('#playlistTracks .list-group-item').each(function() {
+        const track = $(this).data('mopidyTrack')
+        mopidyPlaylist.tracks.push(track)
+    })
+    mopidyPlaylist.name = $('#playlistName').val()
+
+    mopidy.playlists.save({'playlist': mopidyPlaylist}).then(function (savedPlaylist) {
+        loadPlaylist(savedPlaylist)
+        alert("Saved")
+    })
 }
 
 function setPlaylistModified(isModified) {
     $('#playlistSave').prop('disabled', !isModified);
     selectedPlaylist.modified = isModified
 }
-    
+
+function setSelectedPlaylist(mopidyPlaylist) {
+    setPlaylistModified(false)
+    selectedPlaylist.model = { ...mopidyPlaylist }; // Taking a copy.
+    if (typeof mopidyPlaylist !== 'undefined') {
+        selectedPlaylist.model.tracks = []
+    }
+}
 
 function loadAllPlaylists (selectFirst) {
     const listElem = $('#playlists')
@@ -86,15 +117,11 @@ function loadAllPlaylists (selectFirst) {
     }, console.error)
 }
 
-function formatPlaylistItem() {
-}
-
 function resetUI() {
     $('#playlistTracks').empty()
     $('#playlistTracksWrap').hide()
-    setPlaylistModified(false)
+    setSelectedPlaylist()
 }
-   
 
 function refreshPlaylists () {
     resetUI()
@@ -103,20 +130,26 @@ function refreshPlaylists () {
     }, console.error)
 }
 
-function loadPlaylist (uri, customListElem) {
-    const listElem = customListElem || $('#playlistTracks')
+function loadPlaylist (uri_or_playlist) {
     resetUI()
-    mopidy.playlists.lookup({'uri': uri}).then(function (playlist) {
-        setPlaylistModified(false)
-        selectedPlaylist.uri = playlist.uri
+
+    var promise
+    if (typeof(uri_or_playlist) === "object") {
+        promise = Promise.resolve(uri_or_playlist)
+    } else {
+        promise = mopidy.playlists.lookup({'uri': uri_or_playlist})
+    }
+    promise.then(function (playlist) {
+        const listElem = $('#playlistTracks')
         for (var i = 0; i < playlist.tracks.length; i++) {
             const track = playlist.tracks[i]
-            const content = htmlTrack(track)
             var listItem = $('<div class="list-group-item list-group-item-action"></div>')
-            listItem.data('spotifyUri', track.uri)
-            listItem.html(htmlItemWithDelete(content))
+            listItem.data('mopidyTrack', track)
+            const wtf = listItem.data('mopidyTrack')
+            listItem.html(htmlItemWithDelete(htmlTrack(track)))
             listItem.appendTo(listElem)
         }
+        setSelectedPlaylist(playlist)
         $('#playlistTracksWrap').show()
         $('#playlistName').val(playlist.name)
     }, console.error)
