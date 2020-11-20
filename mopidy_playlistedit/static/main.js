@@ -1,4 +1,4 @@
-const OFFLINE_TEST = true
+const OFFLINE_TEST = false
 function getMopidy() {
     return OFFLINE_TEST ? MopidyMock() : new Mopidy()
 }
@@ -11,6 +11,7 @@ var selectedPlaylist = {
 $(document).ready(function (event) {
     mopidy = getMopidy()
     mopidy.on('state:online', function () {
+        resetUI()
         loadAllPlaylists(OFFLINE_TEST ? 0 : undefined)
     })
     
@@ -44,6 +45,9 @@ $(document).ready(function (event) {
     $('#playlistReset').on('click', function(){
        loadPlaylist(selectedPlaylist.model.uri)
     });
+    $('#playlistAdd').on('click', function(){
+       addTracks()
+    });
     $('#newPlaylistCreate').on('click', function(){
        createPlaylist()
     });
@@ -61,11 +65,12 @@ function createPlaylist() {
     }
     mopidy.playlists.create({'name': name, 'uri_scheme': scheme}).then(function (newPlaylist) {
         if (newPlaylist) {
-            //loadPlaylist(newPlaylist)
-            loadAllPlaylists(-1)
+            console.log(newPlaylist)
+            loadAllPlaylists()
+            loadPlaylist(newPlaylist)
         }
-    })
-    $("#exampleModal").modal('hide')
+    }, console.error)
+    $("#newPlaylistModal").modal('hide')
     $("#newPlaylistName").val("")
 }
 
@@ -121,7 +126,6 @@ function setSelectedPlaylist(mopidyPlaylist) {
 function loadAllPlaylists (selectIndex) {
     const listElem = $('#playlists')
     listElem.empty()
-    resetUI()
     mopidy.playlists.asList().then(function (plists) {
         for (var i = 0; i < plists.length; i++) {
             const p = plists[i]
@@ -137,16 +141,14 @@ function loadAllPlaylists (selectIndex) {
 }
 
 function resetUI() {
-    $('#playlistTracks').empty()
     $('#playlistTracksWrap').hide()
+    $('#playlistTracks').empty()
     setSelectedPlaylist()
 }
 
 function refreshPlaylists () {
     resetUI()
-    mopidy.playlists.refresh().then(function () {
-        loadAllPlaylists()
-    }, console.error)
+    loadAllPlaylists()
 }
 
 function loadPlaylist (uri_or_playlist) {
@@ -160,7 +162,7 @@ function loadPlaylist (uri_or_playlist) {
     }
     promise.then(function (playlist) {
         const listElem = $('#playlistTracks')
-        for (var i = 0; i < playlist.tracks.length; i++) {
+        for (var i = 0; playlist.tracks && i < playlist.tracks.length; i++) {
             const track = playlist.tracks[i]
             var listItem = $('<div class="list-group-item list-group-item-action"></div>')
             listItem.data('mopidyTrack', track)

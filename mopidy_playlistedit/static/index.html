@@ -11,8 +11,8 @@
   </head>
     <body>
 
-        <!-- Modal -->
-        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <!-- New Playlist Modal -->
+        <div class="modal fade" id="newPlaylistModal" tabindex="-1" role="dialog" aria-labelledby="newPlaylistModalLabel" aria-hidden="true">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
@@ -46,14 +46,98 @@
           </div>
         </div>
         </div>
+    
+        <!-- Search Modal -->
+        <div class="modal fade" id="addTracksModal" tabindex="-1" role="dialog" aria-labelledby="addTracksModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Add tracks to the selected playlist</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                        <h5 class="modal-title">Manually add tracks by URI:</h5>
+                        <div class="form-group">
+                            <small id="addUriHelp" class="form-text text-muted">Specifiy one URI per line.</small>
+                            <textarea rows="4" class="form-control" style="max-width: 100%" id="addUri" aria-describedby="addUriHelp" placeholder="spotify:track:60a0Rd6pjrkxjPbaKzXjfq"></textarea>
+                        </div>
+                        <button type="button" class="btn-sm btn-primary" id="addTracksUriAdd">&nbsp;<span class="fas fa-plus">&nbsp;Add</span></button>
+                        <button type="button" class="btn-sm btn-primary" id="addTracksUriClear">&nbsp;<span class="fas fa-times">&nbsp;Clear</span></button>
+                </div>
+            
+              <div class="modal-body">
+                <h5 class="modal-title">Search for tracks to add:</h5>
+                <div class="form-group">
+                    <small class="form-text text-muted">Restrict results to a specific backend or search everything.</small>
+                    <div class="input-group form-row mb-2">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Everything!</span>                            
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#">Everything!</a>
+                                <div role="separator" class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Spotify</a>
+                                <a class="dropdown-item" href="#">M3U</a>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Search..." id="searchText">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary btn-sm" id="searchDoSearch">&nbsp;<span class="fas fa-search">&nbsp;</span></button>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 40vh; overflow-y:auto;">
+                    <div class="list-group" id="searchResults">
+                        <div class="list-group-item list-group-item-action">Track 1</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 2</div>
+                        <div class="list-group-item list-group-item-action">Track 3</div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+        </div>
 
+      <!-- Main Layout -->
       <div class="container d-flex flex-column" style="">
         
         <header class="row" style="height: 10vh;">
             <div class="col-4">
-                <button type="button" class="btn btn-primary" onclick="refreshPlaylists();">Refresh</button>
+                <button type="button" class="btn btn-primary" onclick="refreshPlaylists();"><span class="fas fa-undo"> Refresh</span></button>
                 &nbsp;
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">New</button>
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#newPlaylistModal"><span class="fas fa-plus"> New</span></button>
             </div>
         </header>
         
@@ -70,7 +154,8 @@
                   <input type="text" class="form-control" id="playlistName">
                   <div class="input-group-append">
                     <button type="button" class="btn btn-primary btn-sm" id="playlistSave" disabled><span class="fas fa-save"> Save</span></button>
-                    <button type="button" class="btn btn-primary btn-sm" id="playlistReset"><span class="fas fa-undo"> Reset</span></button>
+                    <button type="button" class="btn btn-primary btn-sm" id="playlistReset"><span class="fas fa-undo"> Refresh</span></button>
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#addTracksModal"><span class="fas fa-search-plus"> Add</span></button>
                   </div>
                 </div>
               <div class="list-group" id="playlistTracks"></div>
