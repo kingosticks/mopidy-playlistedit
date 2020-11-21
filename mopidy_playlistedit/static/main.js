@@ -124,15 +124,17 @@ function createPlaylist() {
     if (name.length == 0) {
         return
     }
-    mopidy.playlists.create({'name': name, 'uri_scheme': scheme}).then(function (newPlaylist) {
-        if (newPlaylist) {
-            console.log(newPlaylist)
-            loadAllPlaylists()
-            loadPlaylist(newPlaylist)
-        }
-    }, console.error)
     $("#newPlaylistModal").modal('hide')
     $("#newPlaylistName").val("")
+
+    mopidy.playlists.create({'name': name, 'uri_scheme': scheme}).then(function (newPlaylist) {
+        if (newPlaylist) {
+            loadAllPlaylists()
+            loadPlaylist(newPlaylist).then(function () {
+                $('#addTracksModal').modal('show')
+            })
+        }
+    }, console.error)
 }
 
 function removeTrack(trackItem) {
@@ -221,7 +223,7 @@ function loadPlaylist (uri_or_playlist) {
     } else {
         promise = mopidy.playlists.lookup({'uri': uri_or_playlist})
     }
-    promise.then(function (playlist) {
+    return promise.then(function (playlist) {
         const listElem = $('#playlistTracks')
         for (var i = 0; playlist.tracks && i < playlist.tracks.length; i++) {
             const track = playlist.tracks[i]
