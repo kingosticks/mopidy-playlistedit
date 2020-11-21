@@ -7,12 +7,15 @@ var selectedPlaylist = {
     modified: false,
     model: null,
 }
+var searchUriSchemes = []
+var playlistUriSchemes = []
 
 $(document).ready(function (event) {
     mopidy = getMopidy()
     mopidy.on('state:online', function () {
         resetUI()
         loadAllPlaylists(OFFLINE_TEST ? 0 : undefined)
+        fetchUriSchemes()
     })
     
     Sortable.create(playlistTracks, {
@@ -51,7 +54,65 @@ $(document).ready(function (event) {
     $('#newPlaylistCreate').on('click', function(){
        createPlaylist()
     });
+    $('#newPlaylistModal').on('show.bs.modal', function (event) {
+        const staticSchemes = []
+        populateUriSchemes(playlistUriSchemes, staticSchemes, "#newPlaylistSchemeSelect", "#newPlaylistScheme")
+    });
+    $('#addTracksModal').on('show.bs.modal', function (event) {
+        const staticSchemes = ["Everything!"]
+        populateUriSchemes(searchUriSchemes, staticSchemes, "#searchSchemeSelect", "#searchScheme")
+    });
 })
+
+function fetchUriSchemes() {
+    searchUriSchemes = []
+    mopidy.getUriSchemes().then(function (schemes) {
+        for (var i = 0; i < schemes.length; i++) {
+            searchUriSchemes.push(schemes[i].toLowerCase())
+        }
+    })
+    playlistUriSchemes = []
+    mopidy.playlists.getUriSchemes().then(function (schemes) {
+        for (var i = 0; i < schemes.length; i++) {
+            playlistUriSchemes.push(schemes[i].toLowerCase())
+        }
+    })
+}
+
+function makeSelectOption(template, val) {
+    var option = $(template)
+    option.data('scheme', val)
+    option.html(val)
+    return option
+    option.appendTo(selectElem)
+}
+
+function populateUriSchemes(schemes, staticSchemes, selectId, mytargetId, ) {
+    const selectElem = $(selectId)
+    selectElem.empty()
+    
+    const itemTemplate = `<a class="dropdown-item" onclick="setUriScheme($(this), '${ mytargetId }')"></a>`
+    
+    for (var i = 0; i < staticSchemes.length; i++) {
+        makeSelectOption(itemTemplate, staticSchemes[i]).appendTo(selectElem)
+    }
+    if (staticSchemes.length) {
+        const divider = $('<div role="separator" class="dropdown-divider"></div>')
+        divider.appendTo(selectElem)
+    }
+    
+    for (var i = 0; i < schemes.length; i++) {
+        makeSelectOption(itemTemplate, schemes[i]).appendTo(selectElem)
+    }
+    selectElem.children().eq(0).click()
+}
+
+function setUriScheme(selectedElem, targetId) {
+    const uriScheme = selectedElem.data('scheme')
+    const span = $(targetId)
+    span.html(uriScheme)
+}
+    
 
 function spotifyUri(el) {
     return el.data('spotifyUri')
