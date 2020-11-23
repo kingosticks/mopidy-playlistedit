@@ -62,7 +62,48 @@ $(document).ready(function (event) {
         const staticSchemes = ["Everything!"]
         populateUriSchemes(searchUriSchemes, staticSchemes, "#searchSchemeSelect", "#searchScheme")
     });
+    $('#addTracksUriClear').on('click', function(){
+       addTracksUriClear()
+    });
+    $('#addTracksUriAdd').on('click', function(){
+       addTracksUriAdd()
+    });
 })
+
+function addTracksUriClear() {
+    $('#addUri').val('')
+}
+
+function addTracksUriAdd() {
+    const textbox = $('#addUri')
+    const rawUris = textbox.val().split('\n')
+    var uris = []
+    for (var i = 0; i < rawUris.length; i++) {
+        // Some basic sanitising
+        const trimmed = rawUris[i].trim()
+        if (trimmed.length > 3 && trimmed.indexOf(':') > 0) {
+            uris.push(trimmed)
+        }
+    }
+    addTracksUriClear()
+    if (!uris.length) {
+        return
+    }
+
+    mopidy.library.lookup({'uris': uris}).then(function (trackResults) {
+        var trackList = []
+        for (var i = 0; i < uris.length; i++) {
+            const uri = uris[i]
+            for (var j = 0; j < trackResults[uri].length; j++) {
+                trackList.push(trackResults[uri][j])
+            }
+        }
+        if (trackList.length) {
+            displayTracks(trackList, $('#playlistTracks'))
+            setPlaylistModified(true)
+        }
+    }, console.error)
+}
 
 function fetchUriSchemes() {
     searchUriSchemes = []
@@ -214,6 +255,15 @@ function refreshPlaylists () {
     loadAllPlaylists()
 }
 
+function displayTracks(tracks, listElem) {
+    for (var i = 0; tracks && i < tracks.length; i++) {
+        var listItem = $('<div class="list-group-item list-group-item-action"></div>')
+        listItem.data('mopidyTrack', tracks[i])
+        listItem.html(htmlItemWithDelete(htmlTrack(tracks[i])))
+        listItem.appendTo(listElem)
+    }
+}
+
 function loadPlaylist (uri_or_playlist) {
     resetUI()
 
@@ -224,15 +274,7 @@ function loadPlaylist (uri_or_playlist) {
         promise = mopidy.playlists.lookup({'uri': uri_or_playlist})
     }
     return promise.then(function (playlist) {
-        const listElem = $('#playlistTracks')
-        for (var i = 0; playlist.tracks && i < playlist.tracks.length; i++) {
-            const track = playlist.tracks[i]
-            var listItem = $('<div class="list-group-item list-group-item-action"></div>')
-            listItem.data('mopidyTrack', track)
-            const wtf = listItem.data('mopidyTrack')
-            listItem.html(htmlItemWithDelete(htmlTrack(track)))
-            listItem.appendTo(listElem)
-        }
+        displayTracks(playlist.tracks, $('#playlistTracks'))
         setSelectedPlaylist(playlist)
         $('#playlistTracksWrap').show()
         $('#playlistName').val(playlist.name)
